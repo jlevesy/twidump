@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"sync"
+	"text/template"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -18,14 +19,7 @@ import (
 const (
 	concurrency         = 5
 	credentialsFilePath = "credentials.json"
-
-	dumpPattern = `
----------------------------------------------------
-From : %s - Favorites : %d - Retweets : %d
----------------------------------------------------
-%s
----------------------------------------------------
-`
+	templateFile        = "template.tmpl"
 )
 
 type credentials struct {
@@ -119,7 +113,23 @@ func loadAccounts(accountFilePath string, in chan<- *account) {
 }
 
 func dumpTimeline(outputFilePath string, out <-chan []twitter.Tweet, done chan<- struct{}) {
-	file, err := os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.Open(templateFile)
+
+	if err != nil {
+		log.Fatal("Failed to open templateFile, reason is :", err)
+	}
+
+	defer file.Close()
+
+	templateContent, err := ioutil.ReadAll(file)
+
+	if err != nil {
+		log.Fatal("Failed to read templateFile, reason is :", err)
+	}
+
+	t := template.Must(template.New("timeline").Parse(string(templateContent)))
+
+	file, err = os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
 		log.Fatal("Failed to open input file, reason is :", err)
@@ -130,16 +140,10 @@ func dumpTimeline(outputFilePath string, out <-chan []twitter.Tweet, done chan<-
 	writer := bufio.NewWriter(file)
 
 	for tweets := range out {
-		for _, tweet := range tweets {
-			fmt.Fprintf(
-				writer,
-				dumpPattern,
-				tweet.User.ScreenName,
-				tweet.FavoriteCount,
-				tweet.RetweetCount,
-				tweet.Text,
-			)
+		if err := t.Execute(writer, struct{ Tweets []twitter.Tweet }{tweets}); err != nil {
+			log.Println("Failed to execute template")
 		}
+
 		writer.Flush()
 	}
 
