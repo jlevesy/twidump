@@ -18,6 +18,14 @@ import (
 const (
 	concurrency         = 5
 	credentialsFilePath = "credentials.json"
+
+	dumpPattern = `
+---------------------------------------------------
+From : %s - Favorites : %d - Retweets : %d
+---------------------------------------------------
+%s
+---------------------------------------------------
+`
 )
 
 type credentials struct {
@@ -123,7 +131,14 @@ func dumpTimeline(outputFilePath string, out <-chan []twitter.Tweet, done chan<-
 
 	for tweets := range out {
 		for _, tweet := range tweets {
-			fmt.Fprintf(writer, "%s\n %s - %s\n", tweet.User.ScreenName, tweet.Text, tweet.FullText)
+			fmt.Fprintf(
+				writer,
+				dumpPattern,
+				tweet.User.ScreenName,
+				tweet.FavoriteCount,
+				tweet.RetweetCount,
+				tweet.Text,
+			)
 		}
 		writer.Flush()
 	}
