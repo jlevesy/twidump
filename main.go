@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
 	"sync"
 	"text/template"
+	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -20,7 +22,9 @@ const (
 	credentialsFilePath = "credentials.json"
 
 	defaultAccountsFilename = "accounts.csv"
-	defaultOutputFilename   = "tweedump-result.txt"
+
+	outputFilenameTemplate   = "tweedump-result-%s.txt"
+	outputFilenameDateFormat = "2-01-2006-15-04-05"
 )
 
 type credentials struct {
@@ -41,16 +45,13 @@ type config struct {
 }
 
 func getConfig(args []string) *config {
-	result := config{defaultAccountsFilename, defaultOutputFilename}
+	result := config{AccountsFile: defaultAccountsFilename}
 
-	if len(args) == 2 {
+	if len(args) > 1 {
 		result.AccountsFile = args[1]
 	}
 
-	if len(args) > 2 {
-		result.AccountsFile = args[1]
-		result.OutputFile = args[2]
-	}
+	result.OutputFile = fmt.Sprintf(outputFilenameTemplate, time.Now().Format(outputFilenameDateFormat))
 
 	return &result
 }
