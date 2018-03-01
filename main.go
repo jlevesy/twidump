@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -19,7 +18,6 @@ import (
 const (
 	concurrency         = 5
 	credentialsFilePath = "credentials.json"
-	templateFile        = "template.tmpl"
 )
 
 type credentials struct {
@@ -113,23 +111,9 @@ func loadAccounts(accountFilePath string, in chan<- *account) {
 }
 
 func dumpTimeline(outputFilePath string, out <-chan []twitter.Tweet, done chan<- struct{}) {
-	file, err := os.Open(templateFile)
-
-	if err != nil {
-		log.Fatal("Failed to open templateFile, reason is :", err)
-	}
-
-	defer file.Close()
-
-	templateContent, err := ioutil.ReadAll(file)
-
-	if err != nil {
-		log.Fatal("Failed to read templateFile, reason is :", err)
-	}
-
 	t := template.Must(template.New("timeline").Parse(string(templateContent)))
 
-	file, err = os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
 		log.Fatal("Failed to open input file, reason is :", err)
