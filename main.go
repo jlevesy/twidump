@@ -143,18 +143,25 @@ func loadAccounts(accountFilePath string, in chan<- *account) {
 func dumpTimeline(outputFilePath string, out <-chan []twitter.Tweet, done chan<- struct{}) {
 	t := template.Must(template.New("timeline").Parse(string(templateContent)))
 
-	file, err := os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var output io.Writer
 
-	if err != nil {
-		log.Fatal("Failed to open input file, reason is :", err)
+	if os.Getenv("STDOUT") != "" {
+		output = os.Stdout
+	} else {
+		file, err := os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+		if err != nil {
+			log.Fatal("Failed to open input file, reason is :", err)
+		}
+
+		defer file.Close()
+		output = file
 	}
 
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
+	writer := bufio.NewWriter(output)
 
 	for tweets := range out {
-		if err := t.Execute(writer, struct{ Tweets []twitter.Tweet }{tweets}); err != nil {
+		if err := t.Execute(writer, tweets); err != nil {
 			log.Println("Failed to execute template")
 		}
 
