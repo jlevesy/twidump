@@ -18,6 +18,9 @@ import (
 const (
 	concurrency         = 5
 	credentialsFilePath = "credentials.json"
+
+	defaultAccountsFilename = "accounts.csv"
+	defaultOutputFilename   = "tweedump-result.txt"
 )
 
 type credentials struct {
@@ -30,6 +33,26 @@ type credentials struct {
 type account struct {
 	ScreenName string
 	SinceID    int64
+}
+
+type config struct {
+	AccountsFile string
+	OutputFile   string
+}
+
+func getConfig(args []string) *config {
+	result := config{defaultAccountsFilename, defaultOutputFilename}
+
+	if len(args) == 2 {
+		result.AccountsFile = args[1]
+	}
+
+	if len(args) > 2 {
+		result.AccountsFile = args[1]
+		result.OutputFile = args[2]
+	}
+
+	return &result
 }
 
 func setupClient(credentialsFilePath string) (*twitter.Client, error) {
@@ -135,16 +158,13 @@ func dumpTimeline(outputFilePath string, out <-chan []twitter.Tweet, done chan<-
 }
 
 func main() {
-
-	if len(os.Args) != 3 {
-		log.Fatal("Usage ./twidump accounts.csv output")
-	}
-
 	client, err := setupClient(credentialsFilePath)
 
 	if err != nil {
 		log.Fatal("Failed to setup client, reason is", err)
 	}
+
+	c := getConfig(os.Args)
 
 	in := make(chan *account, concurrency)
 	out := make(chan []twitter.Tweet)
@@ -157,9 +177,9 @@ func main() {
 		go fetchTimeline(client, in, out, &wg)
 	}
 
-	go dumpTimeline(os.Args[2], out, done)
+	go dumpTimeline(c.OutputFile, out, done)
 
-	loadAccounts(os.Args[1], in)
+	loadAccounts(c.AccountsFile, in)
 
 	close(in)
 
