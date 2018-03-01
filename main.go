@@ -25,6 +25,8 @@ const (
 
 	outputFilenameTemplate   = "tweedump-result-%s.txt"
 	outputFilenameDateFormat = "2-01-2006-15-04-05"
+
+	commaSeparator = ';'
 )
 
 type credentials struct {
@@ -51,7 +53,10 @@ func getConfig(args []string) *config {
 		result.AccountsFile = args[1]
 	}
 
-	result.OutputFile = fmt.Sprintf(outputFilenameTemplate, time.Now().Format(outputFilenameDateFormat))
+	result.OutputFile = fmt.Sprintf(
+		outputFilenameTemplate,
+		time.Now().Format(outputFilenameDateFormat),
+	)
 
 	return &result
 }
@@ -111,6 +116,7 @@ func loadAccounts(accountFilePath string, in chan<- *account) {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
+	reader.Comma = commaSeparator
 
 	for {
 		record, err := reader.Read()
