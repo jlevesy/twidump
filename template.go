@@ -11,9 +11,15 @@ RT @{{ $tweet.RetweetedStatus.User.ScreenName}}: {{$tweet.RetweetedStatus.FullTe
 Quote from @{{ .User.ScreenName}}: {{.FullText}}
 {{ end }}
 {{ $tweet.FullText }}
+{{ with $tweet.ExtendedEntities }}
+Media :
+{{- range $medium := .Media }}
+Type: {{$medium.Type}} - Display URL {{$medium.DisplayURL}} - URL : {{$medium.MediaURL}}
+{{- end -}}
+{{- end -}}
 {{ end }}
 ---------------------------------------------------
 {{ else }}
- No tweets for that user :(
+No tweets for that user :(
 {{ end -}}
 `
