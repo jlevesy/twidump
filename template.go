@@ -1,18 +1,19 @@
 package main
 
 const templateContent = `
-{{ range $tweet := .}}
+{{- range $tweet := . -}}
 From : {{$tweet.User.ScreenName}}  - Favorites : {{$tweet.FavoriteCount}} - Retweets : {{$tweet.RetweetCount}}
 ---------------------------------------------------
-{{ if $tweet.Truncated }} Truncated {{ end }}
-{{ if $tweet.Retweeted }} Retweeted {{ end }}
-{{ if $tweet.ExtendedTweet }} Has Extended Tweet {{ end }}
-{{ if $tweet.RetweetedStatus }} Has Retweeted Status {{ end }}
-
-{{ if $tweet.Text }} {{ $tweet.Text }} {{ end }}
-{{ if $tweet.FullText }} {{ $tweet.FullText }} {{ end }}
+{{- if $tweet.Retweeted }}
+RT @{{ $tweet.RetweetedStatus.User.ScreenName}}: {{$tweet.RetweetedStatus.FullText}}
+{{- else }}
+{{ with $tweet.QuotedStatus -}}
+Quote from @{{ .User.ScreenName}}: {{.FullText}}
+{{ end }}
+{{ $tweet.FullText }}
+{{ end }}
 ---------------------------------------------------
 {{ else }}
-No tweets for that user :(
-{{ end }}
+ No tweets for that user :(
+{{ end -}}
 `

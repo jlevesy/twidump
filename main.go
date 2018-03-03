@@ -94,6 +94,7 @@ func fetchTimeline(client *twitter.Client, in <-chan *account, out chan<- []twit
 		userTimelineParams := &twitter.UserTimelineParams{
 			ScreenName: account.ScreenName,
 			SinceID:    account.SinceID,
+			TweetMode:  "extended",
 		}
 
 		tweets, _, err := client.Timelines.UserTimeline(userTimelineParams)
