@@ -4,18 +4,19 @@ const templateContent = `
 {{- range $tweet := . -}}
 {{$tweet.CreatedAt}} From : {{$tweet.User.ScreenName}}  - Favorites : {{$tweet.FavoriteCount}} - Retweets : {{$tweet.RetweetCount}}
 ---------------------------------------------------
-{{- if $tweet.Retweeted }}
-RT @{{ $tweet.RetweetedStatus.User.ScreenName}}: {{$tweet.RetweetedStatus.FullText}}
-{{- else }}
 {{ with $tweet.QuotedStatus -}}
 Quote from @{{ .User.ScreenName}}: {{.FullText}}
-{{ end }}
+
+{{ end -}}
+{{with $tweet.RetweetedStatus -}}
+RT @{{.User.ScreenName}}: {{ .FullText }}
+{{- else -}}
 {{ $tweet.FullText }}
-{{ with $tweet.ExtendedEntities }}
+{{- end -}}
+{{ with $tweet.ExtendedEntities -}}
 Media :
 {{- range $medium := .Media }}
 Type: {{$medium.Type}} - Display URL {{$medium.DisplayURL}} - URL : {{$medium.MediaURL}}
-{{- end -}}
 {{- end -}}
 {{ end }}
 ---------------------------------------------------
